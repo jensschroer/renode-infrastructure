@@ -120,8 +120,6 @@ namespace Antmicro.Renode.Peripherals.IRQControllers
                 return (1 << 19) /* NOCP */;
             case Registers.MPUType:
                 return 0x800; // 8 MPU regions
-            case Registers.InterruptControllerType:
-                return 0b0111;
             default:
                 this.LogUnhandledRead(offset);
                 return 0;
@@ -591,7 +589,6 @@ namespace Antmicro.Renode.Peripherals.IRQControllers
 
         private enum Registers
         {
-            InterruptControllerType = 0x4,
             SysTickControl = 0x10,
             SysTickReloadValue = 0x14,
             SysTickValue = 0x18,

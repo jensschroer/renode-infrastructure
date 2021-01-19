@@ -58,7 +58,6 @@ namespace Antmicro.Renode.Peripherals.Video
             repainter.Dispose();
         }
 
-        [field: Transient]
         public event Action<byte[]> FrameRendered;
 
         public int Width { get; private set; }
@@ -154,7 +153,6 @@ namespace Antmicro.Renode.Peripherals.Video
         protected byte[] buffer;
 
         private IManagedThread repainter;
-        [Transient]
         private Action<int, int, PixelFormat, ELFSharp.ELF.Endianess> configurationChanged;
         private readonly object innerLock;
 

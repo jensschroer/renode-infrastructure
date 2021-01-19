@@ -108,8 +108,7 @@ namespace Antmicro.Renode.Peripherals.UART
 
         protected override void QueueEmptied()
         {
-            // Intentionally left blank. Implementing this callback might break
-            // the logic of CharWritten when the receiver is disabled.
+            // intentionally left blank
         }
 
         private Dictionary<long, DoubleWordRegister> DefineRegisters()
@@ -140,7 +139,7 @@ namespace Antmicro.Renode.Peripherals.UART
                     // we don't use this interrupt - just want to hush the register
                 },
                 {(long)Registers.InterruptEnableSet, interruptManager.GetRegister<DoubleWordRegister>(
-                    writeCallback: (interrupt, _, newValue) =>
+                    writeCallback: (interrupt, oldValue, newValue) =>
                     {
                         if(newValue)
                         {
@@ -151,7 +150,7 @@ namespace Antmicro.Renode.Peripherals.UART
                     )
                 },
                 {(long)Registers.InterruptEnableClear, interruptManager.GetRegister<DoubleWordRegister>(
-                    writeCallback: (interrupt, _, newValue) =>
+                    writeCallback: (interrupt, oldValue, newValue) =>
                     {
                         if(newValue)
                         {
@@ -215,6 +214,7 @@ namespace Antmicro.Renode.Peripherals.UART
                             interruptManager.SetInterrupt(Interrupts.ReceiveReady);
                         }
 
+
                         return character;
                     })
                     .WithReservedBits(8, 24)
@@ -232,6 +232,7 @@ namespace Antmicro.Renode.Peripherals.UART
                     })
                     .WithReservedBits(8, 24)
                 );
+
             }
             else
             {

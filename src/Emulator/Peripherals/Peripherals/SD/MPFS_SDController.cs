@@ -348,9 +348,11 @@ namespace Antmicro.Renode.Peripherals.SD
             {
                 case SDCardCommand.CheckSwitchableFunction:
                     internalBuffer.EnqueueRange(sdCard.ReadSwitchFunctionStatusRegister());
+                    irqManager.SetInterrupt(Interrupts.BufferReadReady, irqManager.IsEnabled(Interrupts.BufferReadReady));
                     break;
                 case SDCardCommand.SendInterfaceConditionCommand:
                     internalBuffer.EnqueueRange(sdCard.ReadExtendedCardSpecificDataRegister());
+                    irqManager.SetInterrupt(Interrupts.BufferReadReady, irqManager.IsEnabled(Interrupts.BufferReadReady));
                     break;
                 case SDCardCommand.ReadSingleBlock:
                     ReadCard(sdCard, blockSizeField.Value);
@@ -359,6 +361,7 @@ namespace Antmicro.Renode.Peripherals.SD
                     ReadCard(sdCard, blockCountField.Value * blockSizeField.Value);
                     break;
             }
+            irqManager.SetInterrupt(Interrupts.CommandComplete, irqManager.IsEnabled(Interrupts.CommandComplete));
         }
 
         private void ReadCard(SDCard sdCard, uint size)

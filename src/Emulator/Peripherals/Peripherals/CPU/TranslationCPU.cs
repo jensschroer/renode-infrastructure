@@ -1554,6 +1554,13 @@ namespace Antmicro.Renode.Peripherals.CPU
             get { return DisassemblerManager.Instance.GetAvailableDisassemblers(Architecture); }
         }
 
+        public enum MpuAccess
+        {
+            Read = 0,
+            Write = 1,
+            InstructionFetch = 2
+        }
+
         public ulong TranslateAddress(ulong logicalAddress, MpuAccess accessType)
         {
             return TlibTranslateToPhysicalAddress(logicalAddress, (uint)accessType);
@@ -1571,14 +1578,6 @@ namespace Antmicro.Renode.Peripherals.CPU
         }
 
         #endregion
-
-        public uint PageSize
-        {
-            get
-            {
-                return TlibGetPageSize();
-            }
-        }
 
         public bool IsStarted
         {

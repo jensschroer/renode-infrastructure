@@ -225,7 +225,7 @@ namespace Antmicro.Renode.Peripherals.CPU
             case 4: // SYS_WRITE0
                 if(uart == null) break;
                 string s = "";
-                var addr = this.TranslateAddress(r1, MpuAccess.InstructionFetch);
+                var addr = this.TranslateAddressNoFault(r1);
                 do
                 {
                     var c = this.Bus.ReadByte(addr++);

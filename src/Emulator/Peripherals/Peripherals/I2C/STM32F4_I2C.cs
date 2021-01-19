@@ -13,7 +13,6 @@ using Antmicro.Renode.Peripherals.Bus;
 using System.Collections.Generic;
 using System.Linq;
 using Antmicro.Renode.Core.Structure.Registers;
-using Antmicro.Renode.Utilities;
 
 namespace Antmicro.Renode.Peripherals.I2C
 {
@@ -110,13 +109,18 @@ namespace Antmicro.Renode.Peripherals.I2C
             eventInterruptEnable = control2.DefineFlagField(9, changeCallback: InterruptEnableChange);
             errorInterruptEnable = control2.DefineFlagField(8);
 
-            dataRegister = data.DefineValueField(0, 8, valueProviderCallback: DataRead, writeCallback: DataWrite);
+            dataRegister = data.DefineValueField(0, 8, readCallback: DataRead, writeCallback: DataWrite);
 
             acknowledgeFailed = status1.DefineFlagField(10, FieldMode.ReadToClear | FieldMode.WriteZeroToClear, changeCallback: (_,__) => Update());
             dataRegisterEmpty = status1.DefineFlagField(7, FieldMode.Read);
             dataRegisterNotEmpty = status1.DefineFlagField(6, FieldMode.Read, valueProviderCallback: _ => dataToReceive?.Any() ?? false);
             byteTransferFinished = status1.DefineFlagField(2, FieldMode.Read);
-            addressSentOrMatched = status1.DefineFlagField(1, FieldMode.Read);
+            addressSentOrMatched = status1.DefineFlagField(1, FieldMode.Read, readCallback: (_,__) => {
+                if(state == State.StartInitiated)
+                {
+                    state = State.AwaitingAddress;
+                }
+            });
             startBit = status1.DefineFlagField(0, FieldMode.Read);
 
             transmitterReceiver = status2.DefineFlagField(2, FieldMode.Read);
@@ -153,22 +157,21 @@ namespace Antmicro.Renode.Peripherals.I2C
             ErrorInterrupt.Set(errorInterruptEnable.Value && acknowledgeFailed.Value);
         }
 
-        private uint DataRead(uint oldValue)
+        private void DataRead(uint oldValue, uint newValue)
         {
-            var result = 0u;
             if(dataToReceive != null && dataToReceive.Any())
             {
-                result = dataToReceive.Dequeue();
+                dataRegister.Value = dataToReceive.Dequeue();
             }
-            else
+            if(state == State.HasDataToRead)
             {
-                this.Log(LogLevel.Warning, "Tried to read from an empty fifo");
+                state = State.AwaitingRestartOrStop;
             }
-
-            byteTransferFinished.Value = (dataToReceive != null && dataToReceive.Count > 0);
-
+            if(dataToReceive != null && dataToReceive.Count  < 4)
+            {
+                byteTransferFinished.Value = true;
+            }
             Update();
-            return result;
         }
 
         private void DataWrite(uint oldValue, uint newValue)
@@ -176,7 +179,6 @@ namespace Antmicro.Renode.Peripherals.I2C
             //moved from WriteByte
             byteTransferFinished.Value = false;
             Update();
-
             switch(state)
             {
             case State.AwaitingAddress:
@@ -193,14 +195,18 @@ namespace Antmicro.Renode.Peripherals.I2C
                     if(willReadOnSelectedSlave)
                     {
                         dataToReceive = new Queue<byte>(selectedSlave.Read());
-                        byteTransferFinished.Value = true;
+                        dataRegister.Value = 0u;
+                        if(dataToReceive.Any())
+                        {
+                            dataRegister.Value = dataToReceive.Dequeue();
+                        }
+                        state = State.HasDataToRead;
                     }
                     else
                     {
                         state = State.AwaitingData;
                         dataToTransfer = new List<byte>();
 
-                        dataRegisterEmpty.Value = true;
                         addressSentOrMatched.Value = true;
                     }
                 }
@@ -213,13 +219,12 @@ namespace Antmicro.Renode.Peripherals.I2C
                 break;
             case State.AwaitingData:
                 dataToTransfer.Add((byte)newValue);
-
                 machine.LocalTimeSource.ExecuteInNearestSyncedState(_ =>
                 {
-                    dataRegisterEmpty.Value = true;
-                    byteTransferFinished.Value = true;
+                    startBit.Value = false;
                     Update();
                 });
+                Update();
                 break;
             default:
                 this.Log(LogLevel.Warning, "Writing {0} to DataRegister in unsupported state {1}.", newValue, state);
@@ -250,20 +255,10 @@ namespace Antmicro.Renode.Peripherals.I2C
                 state = State.Idle;
                 Update();
             }
-
-            state = State.Idle;
-            byteTransferFinished.Value = false;
-            dataRegisterEmpty.Value = false;
-            Update();
         }
 
         private void StartWrite(bool oldValue, bool newValue)
         {
-            if(!newValue)
-            {
-                return;
-            }
-
             this.NoisyLog("Setting START bit to {0}", newValue);
             if(selectedSlave != null && dataToTransfer != null && dataToTransfer.Count > 0)
             {
@@ -273,7 +268,7 @@ namespace Antmicro.Renode.Peripherals.I2C
             }
             //TODO: TRA cleared on repeated Start condition. Is this always here?
             transmitterReceiver.Value = false;
-            dataRegisterEmpty.Value = false;
+            dataRegisterEmpty.Value = true;
             byteTransferFinished.Value = false;
             startBit.Value = true;
             if(newValue)
@@ -281,8 +276,9 @@ namespace Antmicro.Renode.Peripherals.I2C
                 switch(state)
                 {
                 case State.Idle:
+                case State.AwaitingRestartOrStop:
                 case State.AwaitingData: //HACK! Should not be here, forced by ExecuteIn somehow.
-                    state = State.AwaitingAddress;
+                    state = State.StartInitiated;
                     masterSlave.Value = true;
                     Update();
                     break;
@@ -336,8 +332,11 @@ namespace Antmicro.Renode.Peripherals.I2C
         private enum State
         {
             Idle,
+            StartInitiated,
             AwaitingAddress,
             AwaitingData,
+            AwaitingRestartOrStop,
+            HasDataToRead
         }
     }
 }

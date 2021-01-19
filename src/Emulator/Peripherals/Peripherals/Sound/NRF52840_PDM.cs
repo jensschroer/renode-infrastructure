@@ -46,39 +46,16 @@ namespace Antmicro.Renode.Peripherals.Sound
             SetSampleFrequency();
         }
 
-        public void SetInputFile(string fileName, Channel channel = Channel.Left, int repeat = 1)
+        public void SetInputFile(string fileName, Channel channel = Channel.Left)
         {
             switch(channel)
             {
                 case Channel.Left:
-                {
-                    if(decoderLeft == null)
-                    {
-                        decoderLeft = new PCMDecoder(16, sampleFrequency, 1, false, this);
-                    }
-
-                    for(var i = 0; i < repeat; i++)
-                    {
-                        decoderLeft.LoadFile(fileName);
-                    }
                     inputFileLeft = fileName;
-                }
-                break;
-
+                    break;
                 case Channel.Right:
-                {
-                    if(decoderRight == null)
-                    {
-                        decoderRight = new PCMDecoder(16, sampleFrequency, 1, false, this);
-                    }
-
-                    for(var i = 0; i < repeat; i++)
-                    {
-                        decoderRight.LoadFile(fileName);
-                    }
                     inputFileRight = fileName;
-                }
-                break;
+                    break;
             }
         }
 
@@ -112,6 +89,15 @@ namespace Antmicro.Renode.Peripherals.Sound
             {
                 this.Log(LogLevel.Error, "Trying to start reception with not enough input files - please set input using `SetinputFile`. Aborting.");
                 return;
+            }
+            
+            decoderLeft = new PCMDecoder(16, sampleFrequency, 1, false, this);
+            decoderLeft.LoadFile(inputFileLeft);
+            
+            if(numberOfChannels == 2)
+            {
+                decoderRight = new PCMDecoder(16, sampleFrequency, 1, false, this);
+                decoderRight.LoadFile(inputFileRight);
             }
             
             StartPDMThread();

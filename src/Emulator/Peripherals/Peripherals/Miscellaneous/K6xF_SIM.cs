@@ -6,17 +6,27 @@
 //
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Antmicro.Renode.Core;
 using Antmicro.Renode.Core.Structure.Registers;
+using Antmicro.Renode.Exceptions;
 using Antmicro.Renode.Logging;
 using Antmicro.Renode.Peripherals.Bus;
+using Antmicro.Renode.Peripherals.Memory;
 
 namespace Antmicro.Renode.Peripherals.Miscellaneous
 {
     public class K6xF_SIM : IDoubleWordPeripheral, IKnownSize
     {
-        public K6xF_SIM(uint? uniqueIdHigh = null, uint? uniqueIdMidHigh = null, uint? uniqueIdMidLow = null, uint? uniqueIdLow = null)
+        public K6xF_SIM(MappedMemory flash, uint? uniqueIdHigh = null, uint? uniqueIdMidHigh = null, uint? uniqueIdMidLow = null, uint? uniqueIdLow = null)
         {
+            this.flash = flash;
+
+            if(!new []{32, 64, 128, 256, 512, 1024 }.Contains((int)flash.Size/1024))
+            {
+                throw new ConstructionException($"Provided flash size is not one of the supplied default sizes. Possible are 32Kb, 64Kb, 128Kb, 256Kb, 512Kb, 1024Kb");
+            }
+
             var rng = EmulationManager.Instance.CurrentEmulation.RandomGenerator;
             
             this.uniqueIdHigh = uniqueIdHigh.HasValue ? uniqueIdHigh.Value : (uint)rng.Next();
@@ -30,25 +40,61 @@ namespace Antmicro.Renode.Peripherals.Miscellaneous
                     .WithValueField(0, 32, FieldMode.Read, valueProviderCallback: _ =>
                     {
                         return this.uniqueIdHigh;
-                    }, name: "SIM_UIDH")
+                    }, name: "UIDH")
                 },
                 {(long)Registers.UniqueIdMidHigh, new DoubleWordRegister(this)
                     .WithValueField(0, 32, FieldMode.Read, valueProviderCallback: _ =>
                     {
                         return this.uniqueIdMidHigh;
-                    }, name: "SIM_UIDMH")
+                    }, name: "UIDMH")
                 },
                 {(long)Registers.UniqueIdMidLow, new DoubleWordRegister(this)
                     .WithValueField(0, 32, FieldMode.Read, valueProviderCallback: _ =>
                     {
                         return this.uniqueIdMidLow;
-                    }, name: "SIM_UIDML")
+                    }, name: "UIDML")
                 },
                 {(long)Registers.UniqueIdLow, new DoubleWordRegister(this)
                     .WithValueField(0, 32, FieldMode.Read, valueProviderCallback: _ =>
                     {
                         return this.uniqueIdLow;
-                    }, name: "SIM_UIDL")
+                    }, name: "UIDL")
+                },
+                {(long)Registers.FlashConfig1, new DoubleWordRegister(this)
+                    .WithValueField(28, 4, FieldMode.Read, valueProviderCallback: _ =>
+                    {
+                        return 0b0000; //None - support not implemented
+                    }, name: "NVMSIZE")
+                    .WithValueField(24, 4, FieldMode.Read, valueProviderCallback: _ =>
+                    {
+                        switch((int)this.flash.Size/1024) //need kB
+                        {
+                            case 32:
+                                return 0b0011;
+                            case 64: 
+                                return 0b0101;
+                            case 128: 
+                                return 0b0111;
+                            case 256:
+                                return 0b1001;
+                            case 512:
+                                return 0b1011;
+                            case 1024:
+                                return 0b1101;
+                            default:
+                                return 0b1111;
+                        }
+                    }, name: "PFSIZE")
+                    .WithReservedBits(20, 4)
+                    .WithValueField(16, 4, FieldMode.Read, valueProviderCallback: _ =>
+                    {
+                        return 0b1111; // None - support not implemented
+                    }, name: "EESIZE")
+                    .WithReservedBits(12, 4)
+                    .WithReservedBits(8, 4) // For FlexNVM this needs to be implemented
+                    .WithReservedBits(2, 6)
+                    .WithTaggedFlag("FLASHDOZE", 1)
+                    .WithTaggedFlag("FLASHDIS", 0)
                 }
             };
 
@@ -70,13 +116,14 @@ namespace Antmicro.Renode.Peripherals.Miscellaneous
             registers.Write(offset, value);
         }
 
-        public long Size => 0x1060;
+        public long Size => 0x2000;
 
         private readonly DoubleWordRegisterCollection registers;
         private readonly uint uniqueIdHigh;
         private readonly uint uniqueIdMidHigh;
         private readonly uint uniqueIdMidLow;
         private readonly uint uniqueIdLow;
+        private readonly MappedMemory flash;
 
         private enum Registers
         {

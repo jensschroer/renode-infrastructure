@@ -484,15 +484,8 @@ namespace Antmicro.Renode.Peripherals.IRQControllers
                             }
                             else
                             {
-                                if((irqs[i] & IRQState.Running) == 0)
-                                {
-                                    this.DebugLog("Cleared pending IRQ {0}.", i);
-                                    irqs[i] &= ~IRQState.Pending;
-                                }
-                                else
-                                {
-                                    this.DebugLog("Not clearing pending IRQ {0} as it is currently running.", i);
-                                }
+                                this.DebugLog("Cleared pending IRQ {0}.", i);
+                                irqs[i] &= ~IRQState.Running;
                             }
                         }
                         mask <<= 1;

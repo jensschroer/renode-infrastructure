@@ -19,17 +19,18 @@ namespace Antmicro.Renode.Utilities
         {
             using(var provider = CodeDomProvider.CreateProvider("CSharp"))
             {
+                var blacklist = new List<string> { "mscorlib", "System." };
                 var outputFileName = TemporaryFilesManager.Instance.GetTemporaryFile();
                 var parameters = new CompilerParameters { GenerateInMemory = false, GenerateExecutable = false, OutputAssembly = outputFileName };
-                parameters.CompilerOptions = "";
 #if PLATFORM_LINUX
-                parameters.CompilerOptions = parameters.CompilerOptions + " /langversion:experimental";
+                parameters.CompilerOptions = "/langversion:experimental";
 #endif
                 var locations = AssemblyHelper.GetAssembliesLocations();
                 if(AssemblyHelper.BundledAssembliesCount > 0)
                 {
-                    // portable already has all the libs included
-                    parameters.CompilerOptions = parameters.CompilerOptions + " -nostdlib";
+                    // Assigning any non-empty string to this property prevents the compiler from referencing mscorlib.dll
+                    parameters.CoreAssemblyFileName = "some bogus string";
+                    locations = locations.Where(x => !blacklist.Any(x.Contains));
                 }
                 foreach(var location in locations)
                 {

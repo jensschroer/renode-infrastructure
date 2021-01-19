@@ -78,14 +78,6 @@ namespace Antmicro.Renode.Peripherals.IRQControllers
             {
                 return HandleSetEnableRead(offset - SetEnableStart);
             }
-            if(offset >= SetPendingStart && offset < SetPendingEnd)
-            {
-                return GetPending((int)(offset - SetPendingStart));
-            }
-            if(offset >= ClearPendingStart && offset < ClearPendingEnd)
-            {
-                return GetPending((int)(offset - ClearPendingStart));
-            }
             switch((Registers)offset)
             {
             case Registers.SysTickCalibrationValue:
@@ -569,11 +561,6 @@ namespace Antmicro.Renode.Peripherals.IRQControllers
         {
             var binaryPointMask = ~((1 << binaryPointPosition + 1) - 1);
             return (priorityA & binaryPointMask) < (priorityB & binaryPointMask);
-        }
-
-        private uint GetPending(int offset)
-        {
-            return BitHelper.GetValueFromBitsArray(irqs.Skip(16 + offset * 8).Take(32).Select(irq => (irq & IRQState.Pending) != 0));
         }
 
         [PostDeserialization]

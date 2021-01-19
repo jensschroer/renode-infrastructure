@@ -322,7 +322,7 @@ namespace Antmicro.Renode.Peripherals.UART
 
         private void StopRx()
         {
-            if(easyDMA && rxAmount.Value < rxMaximumCount.Value)
+            if(rxAmount.Value < rxMaximumCount.Value)
             {
                 // we have not generater ENDRX yet, but it's guaranteed to appear before RXTO
                 interruptManager.SetInterrupt(Interrupts.EndReceive);

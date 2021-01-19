@@ -5,9 +5,7 @@
 // Full license text is available in 'licenses/MIT.txt'.
 //
 
-using System;
 using Antmicro.Renode.Utilities.Packets;
-using Antmicro.Renode.Core.USB;
 
 namespace Antmicro.Renode.Extensions.Utilities.USBIP
 {
@@ -29,10 +27,7 @@ namespace Antmicro.Renode.Extensions.Utilities.USBIP
 
         public override string ToString()
         {
-            var bytes = BitConverter.GetBytes(Setup);
-            Array.Reverse(bytes, 0, bytes.Length);
-            var decodedSetup = Packet.Decode<SetupPacket>(bytes);
-            return $"TransferBufferLength = 0x{TransferBufferLength:X}, StartFrame = 0x{StartFrame:X}, NumberOfPackets = 0x{NumberOfPackets:X}, Interval = 0x{Interval:X}, Setup = 0x{Setup:X} [{decodedSetup}]";
+            return $"TransferBufferLength = 0x{TransferBufferLength:X}, StartFrame = 0x{StartFrame:X}, NumberOfPackets = 0x{NumberOfPackets:X}, Interval = 0x{Interval:X}, Setup = 0x{Setup:X}";
         }
     }
 }

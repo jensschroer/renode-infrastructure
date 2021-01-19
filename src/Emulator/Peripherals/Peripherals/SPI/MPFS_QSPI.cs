@@ -284,15 +284,7 @@ namespace Antmicro.Renode.Peripherals.SPI
 
         private void HandleByteReception()
         {
-            var receivedByte = RegisteredPeripheral.Transmit(0);
-            if(bytesToSkip > 0)
-            {
-                bytesToSkip--;
-            }
-            else
-            {
-                TryReceive(receivedByte);
-            }
+            TryReceive(RegisteredPeripheral.Transmit(0));
             TryFinishTransmission();
         }
 

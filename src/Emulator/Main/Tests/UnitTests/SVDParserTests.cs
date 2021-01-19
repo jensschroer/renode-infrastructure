@@ -17,7 +17,7 @@ namespace Antmicro.Renode.UnitTests
     [TestFixture]
     public class SVDParserTests
     {
-        [OneTimeSetUp]
+        [TestFixtureSetUp]
         public void Init()
         {
             currentMachine = new Machine();

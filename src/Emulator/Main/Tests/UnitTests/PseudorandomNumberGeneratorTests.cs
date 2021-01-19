@@ -68,7 +68,7 @@ namespace Antmicro.Renode.UnitTests
             Assert.AreEqual(test1Result, test2Result);
         }
 
-        [OneTimeSetUp]
+        [TestFixtureSetUp]
         public void SetUp()
         {
             thread1 = tester.ObtainThread(Thread1Name);
@@ -86,7 +86,7 @@ namespace Antmicro.Renode.UnitTests
             }
         }
 
-        [OneTimeTearDown]
+        [TestFixtureTearDown]
         public void TearDown()
         {
             tester.Finish();

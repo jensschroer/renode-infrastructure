@@ -105,7 +105,7 @@ namespace Antmicro.Renode.PeripheralsTests
             return crc;
         }
 
-        [Test, Ignore("Ignored")]
+        [Test, Ignore]
         public void ReadHumidityTest()
         {
             List<byte> packet = new List<byte>();

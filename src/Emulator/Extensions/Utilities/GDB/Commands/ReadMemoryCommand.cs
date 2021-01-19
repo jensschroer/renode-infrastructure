@@ -6,7 +6,6 @@
 //
 using System;
 using System.Text;
-using Antmicro.Renode.Logging;
 
 namespace Antmicro.Renode.Utilities.GDB.Commands
 {
@@ -22,18 +21,7 @@ namespace Antmicro.Renode.Utilities.GDB.Commands
             [Argument(Encoding = ArgumentAttribute.ArgumentEncoding.HexNumber)]int length)
         {
             var content = new StringBuilder();
-
-            if(IsAccessAcrossPages(address, (ulong)length))
-            {
-                return PacketData.ErrorReply(0);
-            }
-
-            if(!TryTranslateAddress(address, out var translatedAddress, write: false))
-            {
-                return PacketData.ErrorReply(14);
-            }
-
-            foreach(var b in manager.Machine.SystemBus.ReadBytes(translatedAddress, length))
+            foreach(var b in manager.Machine.SystemBus.ReadBytes(address, length))
             {
                 content.AppendFormat("{0:x2}", b);
             }
@@ -42,3 +30,4 @@ namespace Antmicro.Renode.Utilities.GDB.Commands
         }
     }
 }
+

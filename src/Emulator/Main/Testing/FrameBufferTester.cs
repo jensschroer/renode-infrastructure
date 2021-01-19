@@ -20,8 +20,6 @@ using Antmicro.Renode.Peripherals;
 using Antmicro.Renode.Peripherals.Video;
 using Antmicro.Renode.Time;
 using Antmicro.Renode.Utilities;
-using Antmicro.Migrant.Hooks;
-using Antmicro.Migrant;
 
 namespace Antmicro.Renode.Testing
 {
@@ -134,10 +132,7 @@ namespace Antmicro.Renode.Testing
         private IPixelConverter converter;
         private int frameSize;
 
-        // Even if newFrameEvent was set before saving the emulation it doesn't matter
-        // as we ultimately would have to start the `WaitForFrame` loop from the beginning either way
-        [Constructor(false)]
-        private AutoResetEvent newFrameEvent;
+        private readonly AutoResetEvent newFrameEvent;
         private readonly TimeSpan globalTimeout;
         private readonly BlockingCollection<byte[]> framesQueue;
     }

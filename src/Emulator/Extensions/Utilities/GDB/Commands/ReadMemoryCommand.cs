@@ -25,12 +25,12 @@ namespace Antmicro.Renode.Utilities.GDB.Commands
 
             if(IsAccessAcrossPages(address, length))
             {
-                return PacketData.ErrorReply();
+                return PacketData.ErrorReply(0);
             }
 
             if(!TryTranslateAddress(address, out var translatedAddress, write: false))
             {
-                return PacketData.ErrorReply(Error.BadAddress);
+                return PacketData.ErrorReply(14);
             }
 
             foreach(var b in manager.Machine.SystemBus.ReadBytes(translatedAddress, (int)length))

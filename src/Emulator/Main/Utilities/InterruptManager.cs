@@ -51,12 +51,7 @@ namespace Antmicro.Renode.Utilities
                         continue;
                     }
 
-                    var field = member.GetMethod.Invoke(master, new object[0]);
-                    if(field == null)
-                    {
-                        throw new ArgumentException("Trying to create the InterruptManager instance, but the IrqProvider object is not initialized");
-                    }
-                    var gpioField = field as IGPIO;
+                    var gpioField = member.GetMethod.Invoke(master, new object[0]) as IGPIO;
                     if(gpioField == null)
                     {
                         throw new ArgumentException("IrqProviderAttribute can only be used on properties of type IGPIO.");

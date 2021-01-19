@@ -113,7 +113,7 @@ namespace Antmicro.Renode.Peripherals.I2C
 
             acknowledgeFailed = status1.DefineFlagField(10, FieldMode.ReadToClear | FieldMode.WriteZeroToClear, changeCallback: (_,__) => Update());
             dataRegisterEmpty = status1.DefineFlagField(7, FieldMode.Read);
-            dataRegisterNotEmpty = status1.DefineFlagField(6, FieldMode.Read, valueProviderCallback: _ => dataToReceive?.Any() ?? false);
+            dataRegisterNotEmpty = status1.DefineFlagField(6, FieldMode.Read);
             byteTransferFinished = status1.DefineFlagField(2, FieldMode.Read);
             addressSentOrMatched = status1.DefineFlagField(1, FieldMode.Read, readCallback: (_,__) => {
                 if(state == State.StartInitiated)
@@ -126,6 +126,7 @@ namespace Antmicro.Renode.Peripherals.I2C
             transmitterReceiver = status2.DefineFlagField(2, FieldMode.Read);
             masterSlave = status2.DefineFlagField(0, FieldMode.Read, readCallback: (_,__) => {
                 addressSentOrMatched.Value = false;
+                dataRegisterNotEmpty.Value |= state == State.HasDataToRead;
                 Update();
             });
 
@@ -171,6 +172,7 @@ namespace Antmicro.Renode.Peripherals.I2C
             {
                 byteTransferFinished.Value = true;
             }
+            dataRegisterNotEmpty.Value = dataToReceive != null && dataToReceive.Any();
             Update();
         }
 
@@ -199,6 +201,7 @@ namespace Antmicro.Renode.Peripherals.I2C
                         if(dataToReceive.Any())
                         {
                             dataRegister.Value = dataToReceive.Dequeue();
+                            dataRegisterNotEmpty.Value = true;
                         }
                         state = State.HasDataToRead;
                     }

@@ -514,7 +514,7 @@ namespace Antmicro.Renode.Peripherals.IRQControllers
                 }
                 if(preemptNeeded)
                 {
-                    var activePriority = (int)priorities[activeIRQs.Peek()];
+                    var activePriority = preemptNeeded ? (int)priorities[activeIRQs.Peek()] : 0;
                     if(!DoesAPreemptB(bestPriority, activePriority))
                     {
                         result = SpuriousInterrupt;

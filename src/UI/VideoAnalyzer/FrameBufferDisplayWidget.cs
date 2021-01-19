@@ -16,7 +16,6 @@ using Antmicro.Renode.Peripherals;
 using ELFSharp.ELF;
 using Antmicro.Renode.Extensions.Analyzers.Video.Handlers;
 using Antmicro.Renode.UI;
-using Antmicro.Renode.Utilities;
 
 namespace Antmicro.Renode.Extensions.Analyzers.Video
 {

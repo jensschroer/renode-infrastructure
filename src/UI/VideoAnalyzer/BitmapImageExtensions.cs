@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2010-2020 Antmicro
+// Copyright (c) 2010-2018 Antmicro
 // Copyright (c) 2011-2015 Realtime Embedded
 //
 // This file is licensed under the MIT License.
@@ -9,39 +9,35 @@ using Xwt.Backends;
 using Color = Xwt.Drawing.Color;
 using BitmapImage = Xwt.Drawing.BitmapImage;
 #if !GUI_DISABLED
-using Antmicro.Renode.Exceptions;
-#else
-    #if PLATFORM_WINDOWS
+#if PLATFORM_WINDOWS
 using Xwt.WPFBackend;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-    #else
+#else
 using Xwt.GtkBackend;
 using System.Runtime.InteropServices;
-    #endif
+#endif
 #endif
 
-namespace Antmicro.Renode.Utilities
+namespace Antmicro.Renode.Extensions.Analyzers.Video
 {
-    public static class BitmapImageExtensions
+    internal static class BitmapImageExtensions
     {
         public static void Copy(this BitmapImage bmp, byte[] frame)
         {
-#if !GUI_DISABLED
-            throw new RecoverableException("The BitmapImageExtensions.Copy() method is not supported in the non-gui configuration");
-#else
             var backend = bmp.GetBackend();
-    #if PLATFORM_WINDOWS
+#if !GUI_DISABLED
+#if PLATFORM_WINDOWS
             var pixelFormat = PixelFormats.Bgra32;
             var stride = (int)bmp.PixelWidth * (pixelFormat.BitsPerPixel / 8);   // width * pixel size in bytes
             var dpi = 96;           // dots per inch - WPF supports automatic scaling
                                     // by using the device independent pixel as its primary unit of measurement,
                                     // which is 1/96 of an inch
             ((WpfImage)backend).MainFrame = BitmapSource.Create((int)bmp.PixelWidth, (int)bmp.PixelHeight, dpi, dpi, pixelFormat, BitmapPalettes.WebPalette, frame, stride);
-    #else
+#else
             var outBuffer = ((GtkImage)backend).Frames[0].Pixbuf.Pixels;
             Marshal.Copy(frame, 0, outBuffer, frame.Length);
-    #endif
+#endif
 #endif
         }
 

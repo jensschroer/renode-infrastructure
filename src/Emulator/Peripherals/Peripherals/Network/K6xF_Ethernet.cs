@@ -1,4 +1,4 @@
-﻿//
+//
 // Copyright (c) 2010-2020 Antmicro
 //
 //  This file is licensed under the MIT License.
@@ -304,7 +304,7 @@ namespace Antmicro.Renode.Peripherals.Network
 
                     rxDescriptorsQueue.GoToNextDescriptor();
 
-                    interruptManager.SetInterrupt(Interrupts.ReceiveBufferInterrupt);
+                    //interruptManager.SetInterrupt(Interrupts.ReceiveBufferInterrupt);
                     interruptManager.SetInterrupt(Interrupts.ReceiveFrameInterrupt);
                 }
                 else
@@ -645,29 +645,42 @@ namespace Antmicro.Renode.Peripherals.Network
                 this.creator = creator;
                 this.baseAddress = baseAddress;
                 descriptors = new List<T>();
-                GoToNextDescriptor();
+                InitDescriptorList();
             }
+
+            private void InitDescriptorList()
+            {
+                // this is the first descriptor - read it from baseAddress
+                currentDescriptorIndex = 0;
+                descriptors.Add(creator(bus, baseAddress));
+                CurrentDescriptor.Read();
+                
+                // If wrap is set, we have reached end of ring and need to start from the beginning
+                while(!CurrentDescriptor.Wrap) 
+                {
+                    descriptors.Add(creator(bus, CurrentDescriptor.DescriptorAddress + CurrentDescriptor.SizeInBytes));
+                    currentDescriptorIndex++;
+                    CurrentDescriptor.Read();
+                }
+
+                // Set to the first descriptor
+                currentDescriptorIndex = 0;
+                CurrentDescriptor.Read();
+            }
+
 
             public void GoToNextDescriptor()
             {
-                if(descriptors.Count == 0)
+                if(descriptors.Count == 0) return;
+                
+                // If wrap is set, we have reached end of ring and need to start from the beginning
+                if(CurrentDescriptor.Wrap)
                 {
-                    // this is the first descriptor - read it from baseAddress
-                    descriptors.Add(creator(bus, baseAddress));
                     currentDescriptorIndex = 0;
                 }
                 else
                 {
-                    // If wrap is set, we have reached end of ring and need to start from the beginning
-                    if(CurrentDescriptor.Wrap)
-                    {
-                        currentDescriptorIndex = 0;
-                    }
-                    else
-                    {
-                        descriptors.Add(creator(bus, CurrentDescriptor.DescriptorAddress + CurrentDescriptor.SizeInBytes));
-                        currentDescriptorIndex++;
-                    }
+                    currentDescriptorIndex++;
                 }
                 CurrentDescriptor.Read();
             }

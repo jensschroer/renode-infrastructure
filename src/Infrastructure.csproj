@@ -2016,6 +2016,7 @@
     <Compile Include="Emulator/Main/Exceptions/UnreachableException.cs"/>
     <Compile Include="Emulator/Peripherals/Peripherals/Miscellaneous/NXP_XRDC.cs" />
     <Compile Include="Emulator/Peripherals/Peripherals/Miscellaneous/SEMA42.cs" />
+    <Compile Include="Emulator/Peripherals/Peripherals/Miscellaneous/NXP_ANADIGStub.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Emulator/Main/Peripherals/Bus/SystemBusGenerated.tt">
